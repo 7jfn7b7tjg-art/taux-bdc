@@ -1,0 +1,136 @@
+name: Release builds
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (e.g. v0.1.0) — used when run manually"
+        required: true
+        default: "v0.1.0"
+
+permissions:
+  contents: write
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PyInstaller
+        run: python -m pip install --upgrade pip pyinstaller
+
+      - name: Build binary
+        run: |
+          python -m PyInstaller --noconfirm --clean --onefile --console --name Taux-BdC taux_bdc.py
+
+      - name: Package ZIP
+        run: |
+          STAGE=dist/macos-stage
+          mkdir -p "$STAGE"
+          cp dist/Taux-BdC "$STAGE/"
+          cp "packaging/Ouvrir Taux BdC.command" "$STAGE/"
+          cp packaging/LISEZ-MOI-macOS.txt "$STAGE/LISEZ-MOI.txt"
+          chmod +x "$STAGE/Taux-BdC" "$STAGE/Ouvrir Taux BdC.command"
+          cd "$STAGE"
+          zip -r ../Taux-BdC-macOS.zip .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Taux-BdC-macOS
+          path: dist/Taux-BdC-macOS.zip
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PyInstaller
+        run: python -m pip install --upgrade pip pyinstaller
+
+      - name: Build binary
+        run: |
+          python -m PyInstaller --noconfirm --clean --onefile --console --name Taux-BdC taux_bdc.py
+
+      - name: Package ZIP
+        shell: pwsh
+        run: |
+          $stage = "dist/windows-stage"
+          New-Item -ItemType Directory -Force -Path $stage | Out-Null
+          Copy-Item "dist/Taux-BdC.exe" $stage
+          Copy-Item "packaging/LISEZ-MOI-Windows.txt" "$stage/LISEZ-MOI.txt"
+          Compress-Archive -Path "$stage/*" -DestinationPath "dist/Taux-BdC-Windows.zip" -Force
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Taux-BdC-Windows
+          path: dist/Taux-BdC-Windows.zip
+
+  release:
+    needs: [build-macos, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve tag name
+        id: tag
+        shell: bash
+        run: |
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            echo "name=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Taux-BdC-macOS
+          path: artifacts
+
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Taux-BdC-Windows
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.name }}
+          name: Taux BdC ${{ steps.tag.outputs.name }}
+          generate_release_notes: true
+          files: |
+            artifacts/Taux-BdC-macOS.zip
+            artifacts/Taux-BdC-Windows.zip
+          body: |
+            ## Downloads / Téléchargements
+
+            | Platform | File |
+            |----------|------|
+            | macOS | `Taux-BdC-macOS.zip` |
+            | Windows | `Taux-BdC-Windows.zip` |
+
+            Unzip → double-click. No Python required.
+
+            **macOS:** open `Ouvrir Taux BdC.command` (right-click → Open if Gatekeeper blocks).
+            **Windows:** open `Taux-BdC.exe` (SmartScreen → More info → Run anyway if needed).
+
+            Source: Bank of Canada Valet API — rates are indicative only.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

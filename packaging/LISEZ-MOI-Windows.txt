@@ -1,0 +1,26 @@
+Taux BdC — Banque du Canada / Bank of Canada
+============================================
+
+FRANÇAIS
+--------
+1. Décompressez ce dossier où vous voulez.
+2. Double-cliquez sur « Taux-BdC.exe ».
+3. Si Windows SmartScreen s'affiche :
+   - Informations complémentaires → Exécuter quand même.
+
+Aucun Python à installer. Connexion Internet requise (API Valet).
+
+Choisissez la langue au démarrage (1 = Français, 2 = English).
+
+ENGLISH
+-------
+1. Unzip this folder anywhere.
+2. Double-click « Taux-BdC.exe ».
+3. If Windows SmartScreen appears:
+   - More info → Run anyway.
+
+No Python install required. Internet connection required (Valet API).
+
+Choose language at startup (1 = Français, 2 = English).
+
+Source: Bank of Canada Valet API — rates are indicative only.

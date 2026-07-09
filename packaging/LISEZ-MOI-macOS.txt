@@ -1,0 +1,28 @@
+Taux BdC — Banque du Canada / Bank of Canada
+============================================
+
+FRANÇAIS
+--------
+1. Décompressez ce dossier où vous voulez.
+2. Double-cliquez sur « Ouvrir Taux BdC.command ».
+3. Si macOS bloque l'ouverture :
+   - Clic droit sur le fichier → Ouvrir → Ouvrir
+   (ou Réglages Système → Confidentialité et sécurité → Autoriser).
+
+Aucun Python à installer. Connexion Internet requise (API Valet).
+
+Choisissez la langue au démarrage (1 = Français, 2 = English).
+
+ENGLISH
+-------
+1. Unzip this folder anywhere.
+2. Double-click « Ouvrir Taux BdC.command ».
+3. If macOS blocks it:
+   - Right-click the file → Open → Open
+   (or System Settings → Privacy & Security → Allow).
+
+No Python install required. Internet connection required (Valet API).
+
+Choose language at startup (1 = Français, 2 = English).
+
+Source: Bank of Canada Valet API — rates are indicative only.
