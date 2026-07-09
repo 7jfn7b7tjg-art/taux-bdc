@@ -15,3 +15,12 @@ untitled folder/
 .venv/
 venv/
 ENV/
+.taux_bdc/
+data/
+Taux BdC.app/
+dist/
+build/
+*.spec
+packaging/AppIcon.iconset/
+macos/TauxBdC/DerivedData/
+macos/TauxBdC/build/

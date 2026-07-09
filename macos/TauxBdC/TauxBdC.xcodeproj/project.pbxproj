@@ -1,0 +1,295 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		DAD06AFE848F4012823BC71E /* Localization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48EA3F292A8D484A9C266596 /* Localization.swift */; };
+		3A22A3486A3246BC9AE9F61E /* AppDataPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF2909608EF94959B0B5B278 /* AppDataPaths.swift */; };
+		71D199D5125741A7B649A40F /* AuditLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB3C3155750E4DDF85FFFE76 /* AuditLog.swift */; };
+		48D937258FF744158780F8C4 /* BoCRateService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89D21D341196438BBBE3CBB0 /* BoCRateService.swift */; };
+		6B465A43CE924468AA25835A /* CSVBatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88838A12561F478DAEA45D8D /* CSVBatch.swift */; };
+		DFFFE7C1BB05485D84155CAD /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = E874FA9E11D84DDE90BE958D /* Models.swift */; };
+		55617E2AD5874B5599E77A3A /* RateCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52AEE4B2999F403794FBF049 /* RateCache.swift */; };
+		42823A3B7157438796727781 /* TauxBdCApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA91AFC179AD47BF8790DA13 /* TauxBdCApp.swift */; };
+		0C3EC3AA55ED493E87979CBE /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04ED4616239043FC9854D40B /* Theme.swift */; };
+		615046D012914C59AD36746B /* BatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8996EF99E43B4E4F9B1E3640 /* BatchView.swift */; };
+		30940370FC514CC5BC6E2B26 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7625660C3EF4183B4CD4C3B /* ContentView.swift */; };
+		3E993E360D2E46B5AE0D5E1B /* ConvertView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F207AD05EDC140A3B9599881 /* ConvertView.swift */; };
+		87BBD876ACED4A9E9189BDBA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FEA76316E72640698EAF9A14 /* Assets.xcassets */; };
+		18443E43788946D9AB3E82F6 /* FileFormats.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0966658CC964E71B861C818 /* FileFormats.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		393A93066BA04F559E59C862 /* Taux BdC.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Taux BdC.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		48EA3F292A8D484A9C266596 /* Localization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Localization.swift"; sourceTree = "<group>"; };
+		EF2909608EF94959B0B5B278 /* AppDataPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDataPaths.swift"; sourceTree = "<group>"; };
+		FB3C3155750E4DDF85FFFE76 /* AuditLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AuditLog.swift"; sourceTree = "<group>"; };
+		89D21D341196438BBBE3CBB0 /* BoCRateService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BoCRateService.swift"; sourceTree = "<group>"; };
+		88838A12561F478DAEA45D8D /* CSVBatch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CSVBatch.swift"; sourceTree = "<group>"; };
+		E874FA9E11D84DDE90BE958D /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Models.swift"; sourceTree = "<group>"; };
+		52AEE4B2999F403794FBF049 /* RateCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "RateCache.swift"; sourceTree = "<group>"; };
+		DA91AFC179AD47BF8790DA13 /* TauxBdCApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TauxBdCApp.swift"; sourceTree = "<group>"; };
+		04ED4616239043FC9854D40B /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Theme.swift"; sourceTree = "<group>"; };
+		8996EF99E43B4E4F9B1E3640 /* BatchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BatchView.swift"; sourceTree = "<group>"; };
+		A7625660C3EF4183B4CD4C3B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ContentView.swift"; sourceTree = "<group>"; };
+		F207AD05EDC140A3B9599881 /* ConvertView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ConvertView.swift"; sourceTree = "<group>"; };
+		FEA76316E72640698EAF9A14 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		E0966658CC964E71B861C818 /* FileFormats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FileFormats.swift"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		802BE69A82A44BF596C6FC88 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		FC05D91160854662B464E263 = {
+			isa = PBXGroup;
+			children = (
+				4240C6CBB64A426C8991BBCC /* TauxBdC */,
+				A2FD31602B5C4B52B81F53C5 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A2FD31602B5C4B52B81F53C5 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				393A93066BA04F559E59C862 /* Taux BdC.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		4240C6CBB64A426C8991BBCC /* TauxBdC */ = {
+			isa = PBXGroup;
+			children = (
+				48EA3F292A8D484A9C266596 /* Localization.swift */,
+				DA91AFC179AD47BF8790DA13 /* TauxBdCApp.swift */,
+				04ED4616239043FC9854D40B /* Theme.swift */,
+				4E9773215D0B4AFF8137D32C /* Services */,
+				3DDA12986A0E4DB48241CE84 /* Views */,
+				FEA76316E72640698EAF9A14 /* Assets.xcassets */,
+			);
+			path = TauxBdC;
+			sourceTree = "<group>";
+		};
+		4E9773215D0B4AFF8137D32C /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				E0966658CC964E71B861C818 /* FileFormats.swift */,
+				EF2909608EF94959B0B5B278 /* AppDataPaths.swift */,
+				FB3C3155750E4DDF85FFFE76 /* AuditLog.swift */,
+				89D21D341196438BBBE3CBB0 /* BoCRateService.swift */,
+				88838A12561F478DAEA45D8D /* CSVBatch.swift */,
+				E874FA9E11D84DDE90BE958D /* Models.swift */,
+				52AEE4B2999F403794FBF049 /* RateCache.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		3DDA12986A0E4DB48241CE84 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				8996EF99E43B4E4F9B1E3640 /* BatchView.swift */,
+				A7625660C3EF4183B4CD4C3B /* ContentView.swift */,
+				F207AD05EDC140A3B9599881 /* ConvertView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5D28A5496B46407B94C11823 /* TauxBdC */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E72C295B79A543AA81985B65 /* Build configuration list for PBXNativeTarget "TauxBdC" */;
+			buildPhases = (
+				AC1743C308B44CC4BAE839D7 /* Sources */,
+				802BE69A82A44BF596C6FC88 /* Frameworks */,
+				D6BE4C21775749D299B8E659 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TauxBdC;
+			productName = "Taux BdC";
+			productReference = 393A93066BA04F559E59C862 /* Taux BdC.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E5203434B66045038AB02671 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+			};
+			buildConfigurationList = 907A5C1823F040B5BE4493C3 /* Build configuration list for PBXProject "TauxBdC" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+				fr,
+			);
+			mainGroup = FC05D91160854662B464E263;
+			productRefGroup = A2FD31602B5C4B52B81F53C5 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5D28A5496B46407B94C11823 /* TauxBdC */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		D6BE4C21775749D299B8E659 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				87BBD876ACED4A9E9189BDBA /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		AC1743C308B44CC4BAE839D7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				18443E43788946D9AB3E82F6 /* FileFormats.swift in Sources */,
+				DAD06AFE848F4012823BC71E /* Localization.swift in Sources */,
+				3A22A3486A3246BC9AE9F61E /* AppDataPaths.swift in Sources */,
+				71D199D5125741A7B649A40F /* AuditLog.swift in Sources */,
+				48D937258FF744158780F8C4 /* BoCRateService.swift in Sources */,
+				6B465A43CE924468AA25835A /* CSVBatch.swift in Sources */,
+				DFFFE7C1BB05485D84155CAD /* Models.swift in Sources */,
+				55617E2AD5874B5599E77A3A /* RateCache.swift in Sources */,
+				42823A3B7157438796727781 /* TauxBdCApp.swift in Sources */,
+				0C3EC3AA55ED493E87979CBE /* Theme.swift in Sources */,
+				615046D012914C59AD36746B /* BatchView.swift in Sources */,
+				30940370FC514CC5BC6E2B26 /* ContentView.swift in Sources */,
+				3E993E360D2E46B5AE0D5E1B /* ConvertView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		AE84A2470FBC413BA7D799C7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		0BE78A20327C4966801BDEBE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		B27340C001FD4F3F9D2D9B67 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Taux BdC";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "MIT — Bank of Canada Valet rates are indicative only.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 0.3.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ca.tauxbdc.app;
+				PRODUCT_NAME = "Taux BdC";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		02DCF512748D486E8C81E3FB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Taux BdC";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "MIT — Bank of Canada Valet rates are indicative only.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 0.3.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ca.tauxbdc.app;
+				PRODUCT_NAME = "Taux BdC";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		907A5C1823F040B5BE4493C3 /* Build configuration list for PBXProject "TauxBdC" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AE84A2470FBC413BA7D799C7 /* Debug */,
+				0BE78A20327C4966801BDEBE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E72C295B79A543AA81985B65 /* Build configuration list for PBXNativeTarget "TauxBdC" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B27340C001FD4F3F9D2D9B67 /* Debug */,
+				02DCF512748D486E8C81E3FB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = E5203434B66045038AB02671 /* Project object */;
+}

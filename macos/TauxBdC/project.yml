@@ -1,0 +1,30 @@
+name: TauxBdC
+options:
+  bundleIdPrefix: ca.tauxbdc
+  deploymentTarget:
+    macOS: "13.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MACOSX_DEPLOYMENT_TARGET: "13.0"
+targets:
+  TauxBdC:
+    type: application
+    platform: macOS
+    sources:
+      - path: TauxBdC
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ca.tauxbdc.app
+        PRODUCT_NAME: Taux BdC
+        MARKETING_VERSION: "0.3.0"
+        CURRENT_PROJECT_VERSION: "1"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Taux BdC
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.finance
+        INFOPLIST_KEY_NSHumanReadableCopyright: "MIT — Bank of Canada Valet rates are indicative only."
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        COMBINE_HIDPI_IMAGES: YES
+        ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_STYLE: Automatic

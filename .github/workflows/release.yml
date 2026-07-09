@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Release version (e.g. v0.1.0) — used when run manually"
+        description: "Release version (e.g. v0.2.0) — used when run manually"
         required: true
-        default: "v0.1.0"
+        default: "v0.2.0"
 
 permissions:
   contents: write
@@ -26,21 +26,36 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install PyInstaller
-        run: python -m pip install --upgrade pip pyinstaller
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip pyinstaller openpyxl
 
       - name: Build binary
         run: |
-          python -m PyInstaller --noconfirm --clean --onefile --console --name Taux-BdC taux_bdc.py
+          python -m PyInstaller \
+            --noconfirm --clean --onefile --windowed \
+            --name Taux-BdC \
+            --hidden-import openpyxl \
+            --collect-submodules openpyxl \
+            gui_taux_bdc.py
 
       - name: Package ZIP
         run: |
           STAGE=dist/macos-stage
           mkdir -p "$STAGE"
-          cp dist/Taux-BdC "$STAGE/"
+          if [ -d dist/Taux-BdC.app ]; then
+            cp -R dist/Taux-BdC.app "$STAGE/"
+          elif [ -f dist/Taux-BdC ]; then
+            cp dist/Taux-BdC "$STAGE/"
+          else
+            echo "No macOS build artifact found" >&2
+            ls -la dist
+            exit 1
+          fi
           cp "packaging/Ouvrir Taux BdC.command" "$STAGE/"
           cp packaging/LISEZ-MOI-macOS.txt "$STAGE/LISEZ-MOI.txt"
-          chmod +x "$STAGE/Taux-BdC" "$STAGE/Ouvrir Taux BdC.command"
+          cp packaging/modele_lot.csv "$STAGE/"
+          chmod +x "$STAGE/Ouvrir Taux BdC.command" || true
+          chmod +x "$STAGE/Taux-BdC" 2>/dev/null || true
           cd "$STAGE"
           zip -r ../Taux-BdC-macOS.zip .
 
@@ -61,12 +76,12 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install PyInstaller
-        run: python -m pip install --upgrade pip pyinstaller
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip pyinstaller openpyxl
 
       - name: Build binary
         run: |
-          python -m PyInstaller --noconfirm --clean --onefile --console --name Taux-BdC taux_bdc.py
+          python -m PyInstaller --noconfirm --clean --onefile --windowed --name Taux-BdC --hidden-import openpyxl --collect-submodules openpyxl gui_taux_bdc.py
 
       - name: Package ZIP
         shell: pwsh
@@ -75,6 +90,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path $stage | Out-Null
           Copy-Item "dist/Taux-BdC.exe" $stage
           Copy-Item "packaging/LISEZ-MOI-Windows.txt" "$stage/LISEZ-MOI.txt"
+          Copy-Item "packaging/modele_lot.csv" $stage
           Compress-Archive -Path "$stage/*" -DestinationPath "dist/Taux-BdC-Windows.zip" -Force
 
       - name: Upload artifact
@@ -126,10 +142,12 @@ jobs:
             | macOS | `Taux-BdC-macOS.zip` |
             | Windows | `Taux-BdC-Windows.zip` |
 
-            Unzip → double-click. No Python required.
+            Desktop app (no Python). Single conversion + batch CSV/Excel.
 
-            **macOS:** open `Ouvrir Taux BdC.command` (right-click → Open if Gatekeeper blocks).
+            **macOS:** open `Taux-BdC.app` or `Ouvrir Taux BdC.command` (right-click → Open if Gatekeeper blocks).
             **Windows:** open `Taux-BdC.exe` (SmartScreen → More info → Run anyway if needed).
+
+            Batch template columns: `date`, `devise`, `montant`, `reference` (`modele_lot.csv` included).
 
             Source: Bank of Canada Valet API — rates are indicative only.
         env:

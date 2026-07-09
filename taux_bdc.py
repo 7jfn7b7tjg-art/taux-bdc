@@ -6,6 +6,7 @@ Outil CLI — taux de change Banque du Canada (Valet) pour écritures comptables
 - Multi-currency → CAD / Multi-devises → CAD
 - Decimal only (no float for amounts / rates)
 - If no rate on the requested date (weekend / holiday), uses previous business day
+- Local rate cache + audit log in ./data/ (fallback: ~/.taux_bdc/)
 """
 
 from __future__ import annotations
@@ -20,6 +21,7 @@ import urllib.request
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP, getcontext
+from pathlib import Path
 from typing import Any, Literal, Optional
 
 getcontext().prec = 28
@@ -29,7 +31,57 @@ LOOKBACK_DAYS = 14
 TIMEOUT_SEC = 30
 
 Lang = Literal["fr", "en"]
+SourceTaux = Literal["api", "cache"]
 _lang: Lang = "fr"
+_data_dir_cache: Optional[Path] = None
+
+
+def _install_root() -> Path:
+    """Dossier où vit le programme (script ou binaire PyInstaller)."""
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parent
+
+
+def _dossier_inscriptible(chemin: Path) -> bool:
+    """Crée le dossier et vérifie qu'on peut y écrire."""
+    try:
+        chemin.mkdir(parents=True, exist_ok=True)
+        sonde = chemin / ".write_test"
+        sonde.write_text("ok", encoding="utf-8")
+        sonde.unlink(missing_ok=True)
+        return True
+    except OSError:
+        return False
+
+
+def data_dir() -> Path:
+    """
+    Cache + journal d'audit :
+    1. <dossier_du_programme>/data/  (priorité — visible avec l'outil)
+    2. ~/.taux_bdc/                 (repli si non inscriptible)
+    """
+    global _data_dir_cache
+    if _data_dir_cache is not None:
+        return _data_dir_cache
+
+    local = _install_root() / "data"
+    if _dossier_inscriptible(local):
+        _data_dir_cache = local
+        return local
+
+    fallback = Path.home() / ".taux_bdc"
+    fallback.mkdir(parents=True, exist_ok=True)
+    _data_dir_cache = fallback
+    return fallback
+
+
+def cache_path() -> Path:
+    return data_dir() / "cache_taux.json"
+
+
+def audit_log_path() -> Path:
+    return data_dir() / "historique_conversions.log"
 
 # Code ISO → (série Valet, libellé FR, libellé EN)
 DEVISES: dict[str, tuple[str, str, str]] = {
@@ -112,13 +164,23 @@ MESSAGES: dict[Lang, dict[str, str]] = {
             "Récupère un taux de change officiel Banque du Canada (Valet) "
             "et convertit un montant devise → CAD pour une écriture comptable."
         ),
-        "arg_epilog": "Sans arguments : mode interactif guidé.",
+        "arg_epilog": (
+            "Sans arguments : mode interactif. "
+            "Flash : python3 taux_bdc.py 2026-06-15 usd [montant] [référence]"
+        ),
         "arg_devise": "Code ISO de la devise (ex. USD, EUR)",
         "arg_date": "Date de la transaction (AAAA-MM-JJ ou JJ/MM/AAAA)",
         "arg_montant": "Montant en devise (ex. 1500.00)",
         "arg_lang": "Langue de l'interface (fr ou en). Défaut : fr",
+        "arg_reference": "Référence facture (optionnel, journal d'audit)",
+        "arg_flash": "Mode Flash : DATE DEVISE [MONTANT] [REFERENCE]",
         "arg_incomplet": (
-            "En mode non-interactif, --devise, --date et --montant sont tous requis."
+            "Fournissez --devise, --date et --montant, "
+            "ou le mode Flash : DATE DEVISE [MONTANT]."
+        ),
+        "flash_taux_seul": (
+            "  {devise}/CAD  date {date_tx} → taux BdC {date_taux} : {taux}"
+            "{note}\n  Source : {source}"
         ),
     },
     "en": {
@@ -171,13 +233,23 @@ MESSAGES: dict[Lang, dict[str, str]] = {
             "Fetches an official Bank of Canada (Valet) exchange rate "
             "and converts a foreign amount to CAD for a journal entry."
         ),
-        "arg_epilog": "With no arguments: guided interactive mode.",
+        "arg_epilog": (
+            "With no arguments: interactive mode. "
+            "Flash: python3 taux_bdc.py 2026-06-15 usd [amount] [reference]"
+        ),
         "arg_devise": "ISO currency code (e.g. USD, EUR)",
         "arg_date": "Transaction date (YYYY-MM-DD or DD/MM/YYYY)",
         "arg_montant": "Amount in foreign currency (e.g. 1500.00)",
         "arg_lang": "Interface language (fr or en). Default: fr",
+        "arg_reference": "Invoice reference (optional, for audit log)",
+        "arg_flash": "Flash mode: DATE CURRENCY [AMOUNT] [REFERENCE]",
         "arg_incomplet": (
-            "In non-interactive mode, --devise, --date and --montant are all required."
+            "Provide --devise, --date and --montant, "
+            "or Flash mode: DATE CURRENCY [AMOUNT]."
+        ),
+        "flash_taux_seul": (
+            "  {devise}/CAD  date {date_tx} → BoC rate {date_taux} : {taux}"
+            "{note}\n  Source: {source}"
         ),
     },
 }
@@ -213,14 +285,121 @@ class TauxChange:
     taux: Decimal
     serie: str
     devise: str
+    source: SourceTaux = "api"
 
     @property
     def est_ajuste(self) -> bool:
         return self.date_demandee != self.date_taux
 
+    @property
+    def libelle_source(self) -> str:
+        if self.source == "cache":
+            if _lang == "en":
+                return f"Local cache (Valet / {self.serie})"
+            return f"Cache local (Valet / {self.serie})"
+        if _lang == "en":
+            return f"Bank of Canada (Valet / {self.serie})"
+        return f"Banque du Canada (Valet / {self.serie})"
+
 
 class TauxBdcError(Exception):
     """Erreur métier ou API pour l'outil taux BdC."""
+
+
+def _charger_cache() -> dict[str, dict[str, str]]:
+    chemin = cache_path()
+    if not chemin.exists():
+        return {}
+    try:
+        data = json.loads(chemin.read_text(encoding="utf-8"))
+        if isinstance(data, dict):
+            return data
+    except (OSError, json.JSONDecodeError):
+        pass
+    return {}
+
+
+def _sauver_cache(cache: dict[str, dict[str, str]]) -> None:
+    chemin = cache_path()
+    tmp = chemin.with_suffix(".tmp")
+    tmp.write_text(json.dumps(cache, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
+    tmp.replace(chemin)
+
+
+def _fusionner_cache(serie: str, observations: dict[date, Decimal]) -> None:
+    if not observations:
+        return
+    cache = _charger_cache()
+    bucket = cache.setdefault(serie, {})
+    for d, taux in observations.items():
+        bucket[d.isoformat()] = format(taux, "f")
+    _sauver_cache(cache)
+
+
+def _observations_depuis_cache(serie: str) -> dict[date, Decimal]:
+    cache = _charger_cache()
+    brut = cache.get(serie) or {}
+    resultat: dict[date, Decimal] = {}
+    for cle, val in brut.items():
+        try:
+            resultat[datetime.strptime(cle, "%Y-%m-%d").date()] = Decimal(str(val))
+        except (ValueError, InvalidOperation):
+            continue
+    return resultat
+
+
+def _resoudre_dans_carte(
+    par_date: dict[date, Decimal],
+    date_demande: date,
+    debut: date,
+) -> Optional[tuple[date, Decimal]]:
+    curseur = date_demande
+    while curseur >= debut:
+        if curseur in par_date:
+            return curseur, par_date[curseur]
+        curseur -= timedelta(days=1)
+    return None
+
+
+def journaliser_conversion(
+    tx: TauxChange,
+    montant_devise: Decimal,
+    montant_cad: Decimal,
+    reference: str = "",
+) -> None:
+    """Ajoute une ligne horodatée dans historique_conversions.log (piste d'audit)."""
+    horodatage = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ref = reference.strip()
+    if ref:
+        sujet = f"Facture n° {ref}" if _lang == "fr" else f"Invoice #{ref}"
+    else:
+        sujet = "Conversion" if _lang == "en" else "Conversion"
+    if _lang == "en":
+        ligne = (
+            f"[{horodatage}] {sujet} converted. "
+            f"Requested date: {tx.date_demandee.isoformat()}. "
+            f"Rate applied: {format(tx.taux, 'f')} "
+            f"(BoC date: {tx.date_taux.isoformat()}). "
+            f"Amount: {format(montant_devise, 'f')} {tx.devise} → "
+            f"{format(montant_cad, 'f')} CAD. "
+            f"Source: {tx.libelle_source}."
+        )
+    else:
+        ligne = (
+            f"[{horodatage}] {sujet} convertie. "
+            f"Date demandée: {tx.date_demandee.isoformat()}. "
+            f"Taux appliqué: {format(tx.taux, 'f')} "
+            f"(Date BdC: {tx.date_taux.isoformat()}). "
+            f"Montant: {format(montant_devise, 'f')} {tx.devise} → "
+            f"{format(montant_cad, 'f')} CAD. "
+            f"Source: {tx.libelle_source}."
+        )
+    try:
+        with audit_log_path().open("a", encoding="utf-8") as f:
+            f.write(ligne + "\n")
+    except OSError:
+        # Ne jamais faire échouer une conversion à cause du journal
+        pass
 
 
 def serie_pour_devise(code: str) -> tuple[str, str]:
@@ -333,6 +512,7 @@ def recuperer_taux(devise: str, date_demande: date) -> TauxChange:
     """
     Récupère le taux BdC pour 1 unité de devise → CAD.
     Si absent à la date demandée, remonte au dernier jour ouvré publié.
+    Essaie le cache local si l'API est indisponible.
     """
     devise = devise.strip().upper()
     serie, _libelle = serie_pour_devise(devise)
@@ -343,41 +523,58 @@ def recuperer_taux(devise: str, date_demande: date) -> TauxChange:
         f"&end_date={date_demande.isoformat()}"
     )
 
-    payload = _http_get_json(url)
+    erreur_api: Optional[Exception] = None
+    try:
+        payload = _http_get_json(url)
+        par_date: dict[date, Decimal] = {}
+        for obs in payload.get("observations", []):
+            raw_date = obs.get("d")
+            cellule = obs.get(serie) or {}
+            raw_valeur = cellule.get("v")
+            if raw_date is None or raw_valeur is None:
+                continue
+            par_date[datetime.strptime(raw_date, "%Y-%m-%d").date()] = Decimal(str(raw_valeur))
 
-    par_date: dict[date, Decimal] = {}
-    for obs in payload.get("observations", []):
-        raw_date = obs.get("d")
-        cellule = obs.get(serie) or {}
-        raw_valeur = cellule.get("v")
-        if raw_date is None or raw_valeur is None:
-            continue
-        par_date[datetime.strptime(raw_date, "%Y-%m-%d").date()] = Decimal(str(raw_valeur))
+        if par_date:
+            _fusionner_cache(serie, par_date)
+            resolu = _resoudre_dans_carte(par_date, date_demande, debut)
+            if resolu is not None:
+                date_taux, taux = resolu
+                return TauxChange(
+                    date_demandee=date_demande,
+                    date_taux=date_taux,
+                    taux=taux,
+                    serie=serie,
+                    devise=devise,
+                    source="api",
+                )
+    except TauxBdcError as exc:
+        erreur_api = exc
 
-    if not par_date:
-        raise TauxBdcError(
-            t(
-                "err_aucun_taux_plage",
-                serie=serie,
-                debut=debut.isoformat(),
-                fin=date_demande.isoformat(),
-            )
+    # Secours : cache local (réseau coupé / API en panne)
+    cache_obs = _observations_depuis_cache(serie)
+    resolu_cache = _resoudre_dans_carte(cache_obs, date_demande, debut)
+    if resolu_cache is not None:
+        date_taux, taux = resolu_cache
+        return TauxChange(
+            date_demandee=date_demande,
+            date_taux=date_taux,
+            taux=taux,
+            serie=serie,
+            devise=devise,
+            source="cache",
         )
 
-    curseur = date_demande
-    while curseur >= debut:
-        if curseur in par_date:
-            return TauxChange(
-                date_demandee=date_demande,
-                date_taux=curseur,
-                taux=par_date[curseur],
-                serie=serie,
-                devise=devise,
-            )
-        curseur -= timedelta(days=1)
+    if erreur_api is not None:
+        raise erreur_api
 
     raise TauxBdcError(
-        t("err_fenetre", date=date_demande.isoformat(), jours=LOOKBACK_DAYS)
+        t(
+            "err_aucun_taux_plage",
+            serie=serie,
+            debut=debut.isoformat(),
+            fin=date_demande.isoformat(),
+        )
     )
 
 
@@ -417,16 +614,15 @@ def formater_nombre(valeur: Decimal, decimales: Optional[int] = None) -> str:
     return f"{signe}{entier_fmt}"
 
 
-def afficher_fiche(
+def texte_fiche(
     tx: TauxChange,
     montant_devise: Decimal,
     montant_cad: Decimal,
-) -> None:
-    """Affiche une fiche prête pour l'écriture comptable."""
+) -> str:
+    """Retourne le texte de fiche prêt pour écriture / copie / export."""
     libelle = libelle_devise(tx.devise, tx.serie)
     note_ajustement = t("note_ajuste") if tx.est_ajuste else ""
 
-    # Alignement simple des labels
     labels = [
         (t("fiche_devise"), f"{tx.devise} ({libelle})"),
         (t("fiche_date_tx"), tx.date_demandee.isoformat()),
@@ -434,7 +630,7 @@ def afficher_fiche(
         (t("fiche_taux", devise=tx.devise), formater_nombre(tx.taux)),
         (t("fiche_montant_devise"), f"{formater_nombre(montant_devise, 2)} {tx.devise}"),
         (t("fiche_montant_cad"), f"{formater_nombre(montant_cad, 2)} CAD"),
-        (t("fiche_source"), t("fiche_source_val", serie=tx.serie)),
+        (t("fiche_source"), tx.libelle_source),
     ]
     largeur = max(len(lab) for lab, _ in labels)
 
@@ -446,7 +642,21 @@ def afficher_fiche(
     for lab, val in labels:
         lignes.append(f"  {lab:<{largeur}} : {val}")
     lignes.append("────────────────────────────────")
-    print("\n".join(lignes))
+    return "\n".join(lignes)
+
+
+def afficher_fiche(
+    tx: TauxChange,
+    montant_devise: Decimal,
+    montant_cad: Decimal,
+) -> None:
+    """Affiche une fiche prête pour l'écriture comptable."""
+    print(texte_fiche(tx, montant_devise, montant_cad))
+
+
+# Alias publics pour GUI / import lot
+parse_date = _parse_date
+parse_montant = _parse_montant
 
 
 def _demander(prompt: str) -> str:
@@ -519,10 +729,16 @@ def _oui_non(prompt: str) -> bool:
         print(t("oui_non_invalide"))
 
 
-def executer_conversion(devise: str, date_tx: date, montant: Decimal) -> None:
+def executer_conversion(
+    devise: str,
+    date_tx: date,
+    montant: Decimal,
+    reference: str = "",
+) -> None:
     print(t("recuperation"))
     tx = recuperer_taux(devise, date_tx)
     cad = convertir(montant, tx.taux)
+    journaliser_conversion(tx, montant, cad, reference=reference)
     print()
     afficher_fiche(tx, montant, cad)
 
@@ -553,11 +769,34 @@ def mode_interactif(demander_langue: bool = True) -> int:
             return 0
 
 
-def mode_cli(devise: str, date_texte: str, montant_texte: str) -> int:
+def mode_cli(
+    devise: str,
+    date_texte: str,
+    montant_texte: Optional[str] = None,
+    reference: str = "",
+) -> int:
+    """Mode non-interactif / Flash. Sans montant : affiche seulement le taux."""
     try:
         date_tx = _parse_date(date_texte)
+        if montant_texte is None or str(montant_texte).strip() == "":
+            print(t("recuperation"))
+            tx = recuperer_taux(devise, date_tx)
+            note = t("note_ajuste") if tx.est_ajuste else ""
+            print(
+                t(
+                    "flash_taux_seul",
+                    devise=tx.devise,
+                    date_tx=tx.date_demandee.isoformat(),
+                    date_taux=tx.date_taux.isoformat(),
+                    taux=formater_nombre(tx.taux),
+                    note=note,
+                    source=tx.libelle_source,
+                )
+            )
+            # Journal audit même pour une consultation de taux (montant 0 non journalisé)
+            return 0
         montant = _parse_montant(montant_texte)
-        executer_conversion(devise, date_tx, montant)
+        executer_conversion(devise, date_tx, montant, reference=reference)
         return 0
     except TauxBdcError as err:
         print(t("erreur_stderr", err=err), file=sys.stderr)
@@ -565,20 +804,32 @@ def mode_cli(devise: str, date_texte: str, montant_texte: str) -> int:
 
 
 def construire_parser() -> argparse.ArgumentParser:
-    # Textes argparse en FR par défaut (avant set_lang) ; --lang documenté bilingue
     parser = argparse.ArgumentParser(
         description=MESSAGES["fr"]["arg_description"],
         epilog=MESSAGES["fr"]["arg_epilog"],
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "flash",
+        nargs="*",
+        metavar="ARG",
+        help=MESSAGES["fr"]["arg_flash"],
     )
     parser.add_argument("--devise", "-d", help=MESSAGES["fr"]["arg_devise"])
     parser.add_argument("--date", help=MESSAGES["fr"]["arg_date"])
     parser.add_argument("--montant", "-m", help=MESSAGES["fr"]["arg_montant"])
+    parser.add_argument("--reference", "-r", default="", help=MESSAGES["fr"]["arg_reference"])
     parser.add_argument(
         "--lang",
         "-l",
         choices=("fr", "en"),
         default=None,
         help=MESSAGES["fr"]["arg_lang"],
+    )
+    parser.add_argument(
+        "--cli",
+        action="store_true",
+        help="Force le mode terminal interactif.",
     )
     return parser
 
@@ -587,22 +838,34 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser = construire_parser()
     args = parser.parse_args(argv)
 
-    fournis = [args.devise, args.date, args.montant]
-    if any(fournis) and not all(fournis):
-        # Appliquer la langue si fournie avant le message d'erreur
-        if args.lang:
-            set_lang(args.lang)
-        parser.error(t("arg_incomplet"))
-
     if args.lang:
         set_lang(args.lang)
-    elif all(fournis):
-        set_lang("fr")  # CLI sans --lang : français par défaut
+
+    # Mode Flash positionnel : DATE DEVISE [MONTANT] [REFERENCE]
+    flash = list(args.flash or [])
+    if flash:
+        if len(flash) < 2:
+            parser.error(t("arg_incomplet"))
+        if args.lang is None:
+            set_lang("fr")
+        date_texte = flash[0]
+        devise = flash[1]
+        montant_texte = flash[2] if len(flash) >= 3 else None
+        reference = flash[3] if len(flash) >= 4 else (args.reference or "")
+        return mode_cli(devise, date_texte, montant_texte, reference=reference)
+
+    fournis = [args.devise, args.date, args.montant]
+    if any(fournis) and not all(fournis):
+        if args.lang is None:
+            set_lang("fr")
+        parser.error(t("arg_incomplet"))
 
     if all(fournis):
-        return mode_cli(args.devise, args.date, args.montant)
+        if args.lang is None:
+            set_lang("fr")
+        return mode_cli(args.devise, args.date, args.montant, reference=args.reference or "")
 
-    # Interactif : demander la langue sauf si --lang déjà fourni
+    # Interactif terminal
     return mode_interactif(demander_langue=args.lang is None)
 
 

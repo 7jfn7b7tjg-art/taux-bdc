@@ -3,24 +3,30 @@ Taux BdC — Banque du Canada / Bank of Canada
 
 FRANÇAIS
 --------
-1. Décompressez ce dossier où vous voulez.
+1. Décompressez ce dossier.
 2. Double-cliquez sur « Taux-BdC.exe ».
-3. Si Windows SmartScreen s'affiche :
-   - Informations complémentaires → Exécuter quand même.
+3. Si SmartScreen : Informations complémentaires → Exécuter quand même.
 
-Aucun Python à installer. Connexion Internet requise (API Valet).
+Dans l'application :
+- Onglet Conversion : une écriture (copier / exporter CSV ou Excel)
+- Onglet Lot : importer un CSV/Excel, traiter, exporter le résultat
+- Modèle de colonnes : date, devise, montant, reference
+  (fichier modele_lot.csv inclus)
 
-Choisissez la langue au démarrage (1 = Français, 2 = English).
+Aucun Python à installer. Internet requis (API Valet).
 
 ENGLISH
 -------
-1. Unzip this folder anywhere.
+1. Unzip this folder.
 2. Double-click « Taux-BdC.exe ».
-3. If Windows SmartScreen appears:
-   - More info → Run anyway.
+3. If SmartScreen: More info → Run anyway.
 
-No Python install required. Internet connection required (Valet API).
+In the app:
+- Convert tab: single entry (copy / export CSV or Excel)
+- Batch tab: import CSV/Excel, process, export results
+- Column template: date, devise, montant, reference
+  (modele_lot.csv included)
 
-Choose language at startup (1 = Français, 2 = English).
+No Python required. Internet required (Valet API).
 
 Source: Bank of Canada Valet API — rates are indicative only.

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Flash CLI — usage: taux 2026-06-15 usd [montant] [référence]
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")" && pwd)"
+exec python3 "$ROOT/taux_bdc.py" "$@"
