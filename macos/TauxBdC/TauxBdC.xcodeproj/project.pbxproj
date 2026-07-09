@@ -20,6 +20,7 @@
 		3E993E360D2E46B5AE0D5E1B /* ConvertView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F207AD05EDC140A3B9599881 /* ConvertView.swift */; };
 		87BBD876ACED4A9E9189BDBA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FEA76316E72640698EAF9A14 /* Assets.xcassets */; };
 		18443E43788946D9AB3E82F6 /* FileFormats.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0966658CC964E71B861C818 /* FileFormats.swift */; };
+		AFDF0E51288F492899943BAA /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66F531DCB6A74F8E83A3F7AC /* HistoryView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -38,6 +39,7 @@
 		F207AD05EDC140A3B9599881 /* ConvertView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ConvertView.swift"; sourceTree = "<group>"; };
 		FEA76316E72640698EAF9A14 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E0966658CC964E71B861C818 /* FileFormats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FileFormats.swift"; sourceTree = "<group>"; };
+		66F531DCB6A74F8E83A3F7AC /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HistoryView.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -97,6 +99,7 @@
 		3DDA12986A0E4DB48241CE84 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				66F531DCB6A74F8E83A3F7AC /* HistoryView.swift */,
 				8996EF99E43B4E4F9B1E3640 /* BatchView.swift */,
 				A7625660C3EF4183B4CD4C3B /* ContentView.swift */,
 				F207AD05EDC140A3B9599881 /* ConvertView.swift */,
@@ -169,6 +172,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AFDF0E51288F492899943BAA /* HistoryView.swift in Sources */,
 				18443E43788946D9AB3E82F6 /* FileFormats.swift in Sources */,
 				DAD06AFE848F4012823BC71E /* Localization.swift in Sources */,
 				3A22A3486A3246BC9AE9F61E /* AppDataPaths.swift in Sources */,

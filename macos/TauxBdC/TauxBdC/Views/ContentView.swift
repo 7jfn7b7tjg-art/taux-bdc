@@ -5,7 +5,7 @@ struct ContentView: View {
     @State private var selection: AppSection? = .convert
 
     enum AppSection: Hashable {
-        case convert, batch
+        case convert, batch, history
     }
 
     var body: some View {
@@ -39,6 +39,9 @@ struct ContentView: View {
                 Label(L10n.t("tab_batch", lang: appState.lang),
                       systemImage: "tablecells")
                     .tag(AppSection.batch)
+                Label(L10n.t("tab_history", lang: appState.lang),
+                      systemImage: "clock.arrow.circlepath")
+                    .tag(AppSection.history)
             } header: {
                 sidebarHeader
             }
@@ -75,6 +78,8 @@ struct ContentView: View {
                     ConvertView()
                 case .batch:
                     BatchView()
+                case .history:
+                    HistoryView()
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)

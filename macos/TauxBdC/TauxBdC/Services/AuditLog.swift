@@ -1,24 +1,26 @@
 import Foundation
 
 enum AuditLog {
+    /// Journalise une conversion dans le sens réel (devise → CAD ou CAD → devise).
     static func append(
         lang: AppLang,
         reference: String,
         requestedDate: String,
         rateDate: String,
         rate: Decimal,
-        currency: String,
-        amount: Decimal,
-        cad: Decimal,
+        fromAmount: Decimal,
+        fromCurrency: String,
+        toAmount: Decimal,
+        toCurrency: String,
         sourceLabel: String
     ) {
         let stamp = Self.timestamp()
         let rateStr = NSDecimalNumber(decimal: rate).stringValue
-        let amtStr = NSDecimalNumber(decimal: amount).stringValue
-        let cadStr = NSDecimalNumber(decimal: cad).stringValue
+        let fromStr = NSDecimalNumber(decimal: fromAmount).stringValue
+        let toStr = NSDecimalNumber(decimal: toAmount).stringValue
         let subject: String
         if reference.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            subject = lang == .fr ? "Conversion" : "Conversion"
+            subject = "Conversion"
         } else if lang == .fr {
             subject = "Facture n° \(reference)"
         } else {
@@ -27,9 +29,9 @@ enum AuditLog {
 
         let line: String
         if lang == .en {
-            line = "[\(stamp)] \(subject) converted. Requested date: \(requestedDate). Rate applied: \(rateStr) (BoC date: \(rateDate)). Amount: \(amtStr) \(currency) → \(cadStr) CAD. Source: \(sourceLabel)."
+            line = "[\(stamp)] \(subject) converted. Requested date: \(requestedDate). Rate applied: \(rateStr) (BoC date: \(rateDate)). Amount: \(fromStr) \(fromCurrency) → \(toStr) \(toCurrency). Source: \(sourceLabel)."
         } else {
-            line = "[\(stamp)] \(subject) convertie. Date demandée: \(requestedDate). Taux appliqué: \(rateStr) (Date BdC: \(rateDate)). Montant: \(amtStr) \(currency) → \(cadStr) CAD. Source: \(sourceLabel)."
+            line = "[\(stamp)] \(subject) convertie. Date demandée: \(requestedDate). Taux appliqué: \(rateStr) (Date BdC: \(rateDate)). Montant: \(fromStr) \(fromCurrency) → \(toStr) \(toCurrency). Source: \(sourceLabel)."
         }
 
         let url = AppDataPaths.auditLog
@@ -43,6 +45,17 @@ enum AuditLog {
         } else {
             try? data.write(to: url, options: .atomic)
         }
+    }
+
+    /// Lignes du journal, plus récentes en premier.
+    static func readEntries() -> [String] {
+        guard let text = try? String(contentsOf: AppDataPaths.auditLog, encoding: .utf8) else {
+            return []
+        }
+        return text
+            .split(separator: "\n", omittingEmptySubsequences: true)
+            .map(String.init)
+            .reversed()
     }
 
     private static func timestamp() -> String {

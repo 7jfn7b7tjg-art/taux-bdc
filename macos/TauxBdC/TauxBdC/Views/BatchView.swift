@@ -215,19 +215,17 @@ struct BatchView: View {
     }
 
     private func saveTemplate() {
-        let panel = NSSavePanel()
-        panel.allowedContentTypes = [.commaSeparatedText]
-        panel.nameFieldStringValue = "modele_lot.csv"
+        let panel = ExportPanel.make(name: "modele_lot.csv", type: .commaSeparatedText)
         if panel.runModal() == .OK, let url = panel.url {
             try? CSVBatch.templateCSV().write(to: url, atomically: true, encoding: .utf8)
+            ExportPanel.remember(url)
         }
     }
 
     private func exportResult(ext: String, type: UTType) {
-        let panel = NSSavePanel()
-        panel.allowedContentTypes = [type]
-        panel.nameFieldStringValue = "conversions_bdc.\(ext)"
+        let panel = ExportPanel.make(name: "conversions_bdc.\(ext)", type: type)
         if panel.runModal() == .OK, var url = panel.url {
+            ExportPanel.remember(url)
             if url.pathExtension.lowercased() != ext {
                 url = url.appendingPathExtension(ext)
             }
@@ -270,9 +268,10 @@ struct BatchView: View {
                         requestedDate: MoneyParsing.isoDate(rate.requestedDate),
                         rateDate: MoneyParsing.isoDate(rate.rateDate),
                         rate: rate.rate,
-                        currency: rate.currency,
-                        amount: amount,
-                        cad: cad,
+                        fromAmount: amount,
+                        fromCurrency: rate.currency,
+                        toAmount: cad,
+                        toCurrency: "CAD",
                         sourceLabel: rate.sourceLabel(lang: appState.lang)
                     )
                     rows[i].rateDate = rate.rateDate

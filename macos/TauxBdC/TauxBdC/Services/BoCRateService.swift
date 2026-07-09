@@ -94,35 +94,99 @@ actor BoCRateService {
     }
 
     func convert(amount: Decimal, rate: Decimal) -> Decimal {
+        Self.multiply(amount, by: rate)
+    }
+
+    // MARK: - Helpers Decimal purs (testables hors réseau)
+
+    /// devise → CAD, arrondi 2 décimales HALF_UP.
+    static func multiply(_ amount: Decimal, by rate: Decimal) -> Decimal {
         var product = amount * rate
         var rounded = Decimal()
         NSDecimalRound(&rounded, &product, 2, .plain)
         return rounded
     }
 
-    func convertAndLog(
-        currency: String,
-        dateText: String,
-        amountText: String,
-        reference: String,
-        lang: AppLang
-    ) async throws -> ConversionResult {
-        let date = try MoneyParsing.parseDate(dateText)
-        let amount = try MoneyParsing.parseAmount(amountText)
-        let rate = try await fetchRate(currency: currency, on: date)
-        let cad = convert(amount: amount, rate: rate.rate)
-        AuditLog.append(
-            lang: lang,
-            reference: reference,
-            requestedDate: MoneyParsing.isoDate(rate.requestedDate),
-            rateDate: MoneyParsing.isoDate(rate.rateDate),
-            rate: rate.rate,
-            currency: rate.currency,
-            amount: amount,
-            cad: cad,
-            sourceLabel: rate.sourceLabel(lang: lang)
+    /// CAD → devise (division), arrondi 2 décimales HALF_UP.
+    static func divide(_ amount: Decimal, by rate: Decimal) -> Decimal {
+        var quotient = amount / rate
+        var rounded = Decimal()
+        NSDecimalRound(&rounded, &quotient, 2, .plain)
+        return rounded
+    }
+
+    /// Moyenne Decimal pure, arrondie à `scale` décimales HALF_UP.
+    static func average(_ values: [Decimal], scale: Int = 6) -> Decimal {
+        guard !values.isEmpty else { return 0 }
+        let sum = values.reduce(Decimal(0), +)
+        var quotient = sum / Decimal(values.count)
+        var rounded = Decimal()
+        NSDecimalRound(&rounded, &quotient, scale, .plain)
+        return rounded
+    }
+
+    // MARK: - Taux moyen mensuel / annuel
+
+    func fetchAverageRate(currency: String, year: Int, month: Int?) async throws -> AverageRate {
+        let series = try CurrencyCatalog.seriesId(for: currency)
+        let ccy = currency.uppercased()
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone(secondsFromGMT: 0)!
+
+        var startComps = DateComponents()
+        startComps.year = year
+        startComps.month = month ?? 1
+        startComps.day = 1
+        guard let start = cal.date(from: startComps) else {
+            throw BoCError.network("Période invalide.")
+        }
+        let end: Date
+        if let month {
+            var next = DateComponents()
+            next.year = month == 12 ? year + 1 : year
+            next.month = month == 12 ? 1 : month + 1
+            next.day = 1
+            end = cal.date(byAdding: .day, value: -1, to: cal.date(from: next)!)!
+        } else {
+            var dec = DateComponents()
+            dec.year = year
+            dec.month = 12
+            dec.day = 31
+            end = cal.date(from: dec)!
+        }
+
+        let today = Date()
+        guard start <= today else {
+            throw BoCError.noRate("Période future — aucun taux publié. / Future period — no rates published.")
+        }
+        let cappedEnd = min(end, today)
+
+        let startISO = MoneyParsing.isoDate(start)
+        let endISO = MoneyParsing.isoDate(cappedEnd)
+        let urlString = "https://www.bankofcanada.ca/valet/observations/\(series)/json?start_date=\(startISO)&end_date=\(endISO)"
+        guard let url = URL(string: urlString) else { throw BoCError.network("URL invalide") }
+
+        var request = URLRequest(url: url, timeoutInterval: 30)
+        request.setValue("taux-bdc-swift/1.0", forHTTPHeaderField: "User-Agent")
+        let (data, response) = try await session.data(for: request)
+        if let http = response as? HTTPURLResponse, http.statusCode == 404 {
+            throw BoCError.network("Série Valet introuvable (404) pour \(series)")
+        }
+        let map = try parseObservations(data: data, series: series)
+        guard !map.isEmpty else {
+            throw BoCError.noRate("Aucune observation \(series) entre \(startISO) et \(endISO).")
+        }
+        let stringKeyed = Dictionary(uniqueKeysWithValues: map.map { (MoneyParsing.isoDate($0.key), $0.value) })
+        RateCache.merge(series: series, observations: stringKeyed)
+
+        let periodLabel = month.map { String(format: "%04d-%02d", year, $0) } ?? String(year)
+        return AverageRate(
+            periodLabel: periodLabel,
+            rate: Self.average(Array(map.values)),
+            observationCount: map.count,
+            series: series,
+            currency: ccy
         )
-        return ConversionResult(rate: rate, amount: amount, cad: cad, reference: reference)
     }
 
     private func parseObservations(data: Data, series: String) throws -> [Date: Decimal] {

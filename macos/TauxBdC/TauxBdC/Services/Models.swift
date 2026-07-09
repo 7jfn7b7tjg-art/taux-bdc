@@ -127,6 +127,15 @@ struct ConversionResult: Equatable {
     let reference: String
 }
 
+/// Taux moyen d'une période (mensuel ou annuel) — moyenne des observations Valet.
+struct AverageRate: Equatable {
+    let periodLabel: String      // "2026-06" ou "2026"
+    let rate: Decimal
+    let observationCount: Int
+    let series: String
+    let currency: String
+}
+
 struct BatchRow: Identifiable, Equatable {
     let id: UUID
     var rawDate: String

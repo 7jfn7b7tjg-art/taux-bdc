@@ -56,6 +56,28 @@ enum L10n {
             ],
             "batch_done": [.fr: "Lot terminé : %d OK, %d erreur(s).", .en: "Batch done: %d OK, %d error(s)."],
             "fiche_title": [.fr: "ÉCRITURE — CONVERSION DEVISE", .en: "JOURNAL ENTRY — FX CONVERSION"],
+            "tab_history": [.fr: "Historique", .en: "History"],
+            "rate_mode": [.fr: "Type de taux", .en: "Rate type"],
+            "mode_daily": [.fr: "Taux du jour", .en: "Daily rate"],
+            "mode_monthly": [.fr: "Moyenne mensuelle", .en: "Monthly average"],
+            "mode_annual": [.fr: "Moyenne annuelle", .en: "Annual average"],
+            "month": [.fr: "Mois", .en: "Month"],
+            "year": [.fr: "Année", .en: "Year"],
+            "period": [.fr: "Période", .en: "Period"],
+            "avg_detail": [.fr: "Taux moyen %@ (%d obs.)", .en: "Average rate %@ (%d obs.)"],
+            "direction": [.fr: "Sens", .en: "Direction"],
+            "converted_amount": [.fr: "Montant converti", .en: "Converted amount"],
+            "copy_full": [.fr: "Fiche complète", .en: "Full summary"],
+            "copy_amount_only": [.fr: "Montant converti seul", .en: "Converted amount only"],
+            "copy_tsv": [.fr: "Ligne tabulée (Excel / journal)", .en: "Tab-separated row (Excel / journal)"],
+            "search_placeholder": [.fr: "Rechercher (référence, devise, date)…", .en: "Search (reference, currency, date)…"],
+            "export_txt": [.fr: "Exporter…", .en: "Export…"],
+            "show_finder": [.fr: "Afficher dans le Finder", .en: "Show in Finder"],
+            "no_history": [
+                .fr: "Aucune conversion journalisée pour l'instant.",
+                .en: "No logged conversions yet."
+            ],
+            "history_count": [.fr: "%d entrée(s)", .en: "%d entry(ies)"],
         ]
         let format = table[key]?[lang] ?? key
         if args.isEmpty { return format }
