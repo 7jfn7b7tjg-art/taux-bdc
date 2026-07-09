@@ -15,6 +15,7 @@ untitled folder/
 .venv/
 venv/
 ENV/
+.pytest_cache/
 .taux_bdc/
 data/
 Taux BdC.app/

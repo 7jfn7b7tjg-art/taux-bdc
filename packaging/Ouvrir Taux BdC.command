@@ -1,10 +1,8 @@
 #!/bin/bash
-cd "$(dirname "$0")"
-if [ -d "Taux-BdC.app" ]; then
-  open "Taux-BdC.app"
-elif [ -x "./Taux-BdC" ]; then
-  ./Taux-BdC
+cd "$(dirname "$0")/.."
+if [ -d "Taux BdC.app" ]; then
+  open "Taux BdC.app"
 else
-  echo "Taux-BdC introuvable / not found in this folder."
-  read -n 1 -s -r -p "Press any key to close…"
+  echo "Taux BdC.app introuvable. Lancez : ./scripts/build_macos.sh"
+  read -n 1 -s -r -p "Appuyez sur une touche…"
 fi

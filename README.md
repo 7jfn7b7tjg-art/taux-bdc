@@ -13,6 +13,37 @@ Desktop tools for Canadian accountants: official Bank of Canada (Valet) FX rates
 
 ---
 
+## Repository layout / Arborescence
+
+```
+taux-bdc/
+├── README.md                 # This file
+├── LICENSE
+├── Taux BdC.command          # macOS double-click launcher (GUI)
+├── Taux BdC.bat              # Windows double-click launcher (GUI)
+├── taux / taux.bat           # Flash CLI launchers
+│
+├── macos/                    # Native SwiftUI app (recommended on Mac)
+│   ├── README.md
+│   ├── TauxBdC/              # Xcode project
+│   └── tests/                # Swift test harness
+│
+├── python/                   # Windows GUI + CLI engine
+│   ├── taux_bdc.py           # Core logic + Flash CLI
+│   ├── gui_taux_bdc.py       # Tkinter GUI
+│   ├── io_ecritures.py       # CSV / Excel batch I/O
+│   ├── requirements.txt
+│   └── tests/                # pytest suite
+│
+├── packaging/                # Release assets (icons, LISEZ-MOI, template)
+├── scripts/                  # build_macos.sh, build_windows.bat, test_macos.sh
+└── .github/workflows/        # CI: tests + release ZIPs
+```
+
+Runtime data (not in git): `data/cache_taux.json`, `data/historique_conversions.log`, `data/sauvegardes/`
+
+---
+
 ## Download / Téléchargement
 
 Latest **Release** assets:
