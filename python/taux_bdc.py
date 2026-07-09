@@ -40,7 +40,11 @@ def _install_root() -> Path:
     """Dossier où vit le programme (script ou binaire PyInstaller)."""
     if getattr(sys, "frozen", False):
         return Path(sys.executable).resolve().parent
-    return Path(__file__).resolve().parent
+    ici = Path(__file__).resolve().parent
+    # Le code vit dans <projet>/python/ — data/ reste à la racine du projet
+    if ici.name == "python":
+        return ici.parent
+    return ici
 
 
 def _dossier_inscriptible(chemin: Path) -> bool:

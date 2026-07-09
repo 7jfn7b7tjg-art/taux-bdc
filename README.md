@@ -49,7 +49,7 @@ Each ZIP includes `modele_lot.csv` when packaged.
 ```bash
 # Rate only / taux seul
 ./taux 2026-07-05 usd
-# or: python3 taux_bdc.py 2026-07-05 usd
+# or: python3 python/taux_bdc.py 2026-07-05 usd
 
 # Convert amount / convertir un montant (+ optional invoice ref)
 ./taux 2026-07-05 usd 1500.00
@@ -98,13 +98,14 @@ open macos/TauxBdC/TauxBdC.xcodeproj
 
 ### Windows / CLI (Python)
 
-Requires Python 3.10+ and `openpyxl`:
+Requires Python 3.10+ and `openpyxl`. All Python code lives in [`python/`](python/):
 
 ```bash
-pip install -r requirements.txt
-python3 gui_taux_bdc.py                    # GUI (Windows / fallback Mac)
-python3 taux_bdc.py                        # terminal interactive
-./taux 2026-07-05 usd 1500.00              # Flash CLI
+pip install -r python/requirements.txt
+python3 python/gui_taux_bdc.py             # GUI (Windows / fallback Mac)
+python3 python/taux_bdc.py                 # terminal interactive
+./taux 2026-07-05 usd 1500.00              # Flash CLI (launcher at repo root)
+python -m pytest python/tests/ -q         # tests
 ```
 
 ### Build Windows with PyInstaller
