@@ -186,6 +186,34 @@ MESSAGES: dict[Lang, dict[str, str]] = {
             "  {devise}/CAD  date {date_tx} → taux BdC {date_taux} : {taux}"
             "{note}\n  Source : {source}"
         ),
+        "direction": "Sens",
+        "mode_daily": "Taux du jour",
+        "mode_monthly": "Moyenne mensuelle",
+        "mode_annual": "Moyenne annuelle",
+        "period": "Période",
+        "converted_amount": "Montant converti",
+        "avg_detail": "Taux moyen {periode} ({nb} obs.)",
+        "err_periode_future": "Période future — aucun taux publié.",
+        "tab_history": "Historique",
+        "clear_history": "Effacer l'historique…",
+        "clear_confirm_title": "Effacer tout l'historique ?",
+        "clear_confirm_message": (
+            "Une sauvegarde horodatée sera créée dans data/sauvegardes/ avant l'effacement."
+        ),
+        "clear_confirm_button": "Effacer",
+        "cancel": "Annuler",
+        "cleared_status": "Historique effacé — sauvegarde : {fichier}",
+        "copy_full": "Fiche complète",
+        "copy_amount_only": "Montant converti seul",
+        "copy_tsv": "Ligne tabulée (Excel / journal)",
+        "search_placeholder": "Rechercher (référence, devise, date)…",
+        "export_txt": "Exporter…",
+        "show_folder": "Ouvrir le dossier data",
+        "no_history": "Aucune conversion journalisée pour l'instant.",
+        "history_count": "{n} entrée(s)",
+        "fiche_title_bidir": "ÉCRITURE — CONVERSION DEVISE",
+        "to_cad": "{devise} → CAD",
+        "from_cad": "CAD → {devise}",
     },
     "en": {
         "titre": "Exchange rates — Bank of Canada",
@@ -255,6 +283,34 @@ MESSAGES: dict[Lang, dict[str, str]] = {
             "  {devise}/CAD  date {date_tx} → BoC rate {date_taux} : {taux}"
             "{note}\n  Source: {source}"
         ),
+        "direction": "Direction",
+        "mode_daily": "Daily rate",
+        "mode_monthly": "Monthly average",
+        "mode_annual": "Annual average",
+        "period": "Period",
+        "converted_amount": "Converted amount",
+        "avg_detail": "Average rate {periode} ({nb} obs.)",
+        "err_periode_future": "Future period — no rates published.",
+        "tab_history": "History",
+        "clear_history": "Clear history…",
+        "clear_confirm_title": "Clear all history?",
+        "clear_confirm_message": (
+            "A timestamped backup will be saved to data/sauvegardes/ before clearing."
+        ),
+        "clear_confirm_button": "Clear",
+        "cancel": "Cancel",
+        "cleared_status": "History cleared — backup: {fichier}",
+        "copy_full": "Full summary",
+        "copy_amount_only": "Converted amount only",
+        "copy_tsv": "Tab-separated row (Excel / journal)",
+        "search_placeholder": "Search (reference, currency, date)…",
+        "export_txt": "Export…",
+        "show_folder": "Open data folder",
+        "no_history": "No logged conversions yet.",
+        "history_count": "{n} entry(ies)",
+        "fiche_title_bidir": "JOURNAL ENTRY — FX CONVERSION",
+        "to_cad": "{devise} → CAD",
+        "from_cad": "CAD → {devise}",
     },
 }
 
@@ -280,6 +336,33 @@ def libelle_devise(code: str, serie: str) -> str:
         _serie, fr, en = DEVISES[code]
         return fr if _lang == "fr" else en
     return t("libelle_generique", code=code)
+
+
+@dataclass(frozen=True)
+class TauxMoyen:
+    periode: str
+    taux: Decimal
+    nb_observations: int
+    serie: str
+    devise: str
+
+
+@dataclass
+class ResultatConversion:
+    """Résultat unitaire (sens et mode taux quelconques)."""
+    devise: str
+    serie: str
+    taux: Decimal
+    libelle_demande: str
+    detail_taux: str
+    montant_entree: Decimal
+    devise_entree: str
+    montant_sortie: Decimal
+    devise_sortie: str
+    source_label: str
+    ajuste: bool = False
+    reference: str = ""
+    mode_taux: str = "daily"
 
 
 @dataclass(frozen=True)
@@ -365,45 +448,103 @@ def _resoudre_dans_carte(
     return None
 
 
+def journaliser_operation(
+    reference: str,
+    libelle_demande: str,
+    detail_taux: str,
+    taux: Decimal,
+    from_amount: Decimal,
+    from_currency: str,
+    to_amount: Decimal,
+    to_currency: str,
+    source_label: str,
+) -> None:
+    """Journalise une conversion dans le sens réel (devise ↔ CAD)."""
+    horodatage = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ref = reference.strip()
+    if ref:
+        sujet = f"Facture n° {ref}" if _lang == "fr" else f"Invoice #{ref}"
+    else:
+        sujet = "Conversion"
+    if _lang == "en":
+        ligne = (
+            f"[{horodatage}] {sujet} converted. "
+            f"Requested date: {libelle_demande}. "
+            f"Rate applied: {format(taux, 'f')} "
+            f"(BoC date: {detail_taux}). "
+            f"Amount: {format(from_amount, 'f')} {from_currency} → "
+            f"{format(to_amount, 'f')} {to_currency}. "
+            f"Source: {source_label}."
+        )
+    else:
+        ligne = (
+            f"[{horodatage}] {sujet} convertie. "
+            f"Date demandée: {libelle_demande}. "
+            f"Taux appliqué: {format(taux, 'f')} "
+            f"(Date BdC: {detail_taux}). "
+            f"Montant: {format(from_amount, 'f')} {from_currency} → "
+            f"{format(to_amount, 'f')} {to_currency}. "
+            f"Source: {source_label}."
+        )
+    try:
+        with audit_log_path().open("a", encoding="utf-8") as f:
+            f.write(ligne + "\n")
+    except OSError:
+        pass
+
+
 def journaliser_conversion(
     tx: TauxChange,
     montant_devise: Decimal,
     montant_cad: Decimal,
     reference: str = "",
 ) -> None:
-    """Ajoute une ligne horodatée dans historique_conversions.log (piste d'audit)."""
-    horodatage = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    ref = reference.strip()
-    if ref:
-        sujet = f"Facture n° {ref}" if _lang == "fr" else f"Invoice #{ref}"
-    else:
-        sujet = "Conversion" if _lang == "en" else "Conversion"
-    if _lang == "en":
-        ligne = (
-            f"[{horodatage}] {sujet} converted. "
-            f"Requested date: {tx.date_demandee.isoformat()}. "
-            f"Rate applied: {format(tx.taux, 'f')} "
-            f"(BoC date: {tx.date_taux.isoformat()}). "
-            f"Amount: {format(montant_devise, 'f')} {tx.devise} → "
-            f"{format(montant_cad, 'f')} CAD. "
-            f"Source: {tx.libelle_source}."
-        )
-    else:
-        ligne = (
-            f"[{horodatage}] {sujet} convertie. "
-            f"Date demandée: {tx.date_demandee.isoformat()}. "
-            f"Taux appliqué: {format(tx.taux, 'f')} "
-            f"(Date BdC: {tx.date_taux.isoformat()}). "
-            f"Montant: {format(montant_devise, 'f')} {tx.devise} → "
-            f"{format(montant_cad, 'f')} CAD. "
-            f"Source: {tx.libelle_source}."
-        )
+    """Alias rétrocompatible : devise → CAD."""
+    journaliser_operation(
+        reference=reference,
+        libelle_demande=tx.date_demandee.isoformat(),
+        detail_taux=tx.date_taux.isoformat(),
+        taux=tx.taux,
+        from_amount=montant_devise,
+        from_currency=tx.devise,
+        to_amount=montant_cad,
+        to_currency="CAD",
+        source_label=tx.libelle_source,
+    )
+
+
+def lire_journal() -> list[str]:
+    """Lignes du journal, plus récentes en premier."""
+    chemin = audit_log_path()
+    if not chemin.exists():
+        return []
     try:
-        with audit_log_path().open("a", encoding="utf-8") as f:
-            f.write(ligne + "\n")
+        texte = chemin.read_text(encoding="utf-8")
     except OSError:
-        # Ne jamais faire échouer une conversion à cause du journal
-        pass
+        return []
+    lignes = [ln for ln in texte.splitlines() if ln.strip()]
+    return list(reversed(lignes))
+
+
+def effacer_journal_avec_sauvegarde() -> Optional[Path]:
+    """Sauvegarde horodatée dans data/sauvegardes/ puis efface le journal actif."""
+    source = audit_log_path()
+    if not source.exists():
+        return None
+    try:
+        contenu = source.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    if not contenu.strip():
+        return None
+
+    backup_dir = data_dir() / "sauvegardes"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    horodatage = datetime.now().strftime("%Y%m%d-%H%M%S")
+    backup = backup_dir / f"historique_conversions_{horodatage}.log"
+    backup.write_text(contenu, encoding="utf-8")
+    source.unlink()
+    return backup
 
 
 def serie_pour_devise(code: str) -> tuple[str, str]:
@@ -512,6 +653,31 @@ def _http_get_json(url: str) -> dict[str, Any]:
     raise TauxBdcError(t("err_reseau", detail=last_error))
 
 
+def _observations_depuis_payload(payload: dict[str, Any], serie: str) -> dict[date, Decimal]:
+    par_date: dict[date, Decimal] = {}
+    for obs in payload.get("observations", []):
+        raw_date = obs.get("d")
+        cellule = obs.get(serie) or {}
+        raw_valeur = cellule.get("v")
+        if raw_date is None or raw_valeur is None:
+            continue
+        par_date[datetime.strptime(raw_date, "%Y-%m-%d").date()] = Decimal(str(raw_valeur))
+    return par_date
+
+
+def _plage_moyenne(annee: int, mois: Optional[int]) -> tuple[date, date]:
+    if mois is not None:
+        debut = date(annee, mois, 1)
+        if mois == 12:
+            fin = date(annee + 1, 1, 1) - timedelta(days=1)
+        else:
+            fin = date(annee, mois + 1, 1) - timedelta(days=1)
+    else:
+        debut = date(annee, 1, 1)
+        fin = date(annee, 12, 31)
+    return debut, fin
+
+
 def recuperer_taux(devise: str, date_demande: date) -> TauxChange:
     """
     Récupère le taux BdC pour 1 unité de devise → CAD.
@@ -530,14 +696,7 @@ def recuperer_taux(devise: str, date_demande: date) -> TauxChange:
     erreur_api: Optional[Exception] = None
     try:
         payload = _http_get_json(url)
-        par_date: dict[date, Decimal] = {}
-        for obs in payload.get("observations", []):
-            raw_date = obs.get("d")
-            cellule = obs.get(serie) or {}
-            raw_valeur = cellule.get("v")
-            if raw_date is None or raw_valeur is None:
-                continue
-            par_date[datetime.strptime(raw_date, "%Y-%m-%d").date()] = Decimal(str(raw_valeur))
+        par_date = _observations_depuis_payload(payload, serie)
 
         if par_date:
             _fusionner_cache(serie, par_date)
@@ -582,10 +741,62 @@ def recuperer_taux(devise: str, date_demande: date) -> TauxChange:
     )
 
 
+def recuperer_taux_moyen(devise: str, annee: int, mois: Optional[int] = None) -> TauxMoyen:
+    """Moyenne mensuelle (mois fourni) ou annuelle (mois=None) des observations Valet."""
+    devise = devise.strip().upper()
+    serie, _libelle = serie_pour_devise(devise)
+    debut, fin = _plage_moyenne(annee, mois)
+    aujourd_hui = date.today()
+    if debut > aujourd_hui:
+        raise TauxBdcError(t("err_periode_future"))
+    fin_cap = min(fin, aujourd_hui)
+
+    url = (
+        f"{VALET_BASE}/{serie}/json"
+        f"?start_date={debut.isoformat()}"
+        f"&end_date={fin_cap.isoformat()}"
+    )
+    payload = _http_get_json(url)
+    par_date = _observations_depuis_payload(payload, serie)
+    if not par_date:
+        raise TauxBdcError(
+            t(
+                "err_aucun_taux_plage",
+                serie=serie,
+                debut=debut.isoformat(),
+                fin=fin_cap.isoformat(),
+            )
+        )
+    _fusionner_cache(serie, par_date)
+    taux_moy = moyenne(list(par_date.values()))
+    periode = f"{annee:04d}-{mois:02d}" if mois is not None else f"{annee:04d}"
+    return TauxMoyen(
+        periode=periode,
+        taux=taux_moy,
+        nb_observations=len(par_date),
+        serie=serie,
+        devise=devise,
+    )
+
+
+def moyenne(valeurs: list[Decimal], decimales: int = 6) -> Decimal:
+    """Moyenne arithmétique Decimal, arrondi HALF_UP."""
+    if not valeurs:
+        return Decimal("0")
+    quantize = Decimal("1").scaleb(-decimales)
+    return (sum(valeurs) / Decimal(len(valeurs))).quantize(quantize, rounding=ROUND_HALF_UP)
+
+
 def convertir(montant: Decimal, taux: Decimal, decimales: int = 2) -> Decimal:
     """Convertit un montant devise → CAD avec arrondi HALF_UP."""
     quantize = Decimal("1").scaleb(-decimales)
     return (montant * taux).quantize(quantize, rounding=ROUND_HALF_UP)
+
+
+def diviser(montant_cad: Decimal, taux: Decimal, decimales: int = 2) -> Decimal:
+    """Convertit un montant CAD → devise avec arrondi HALF_UP."""
+    quantize = Decimal("1").scaleb(-decimales)
+    return (montant_cad / taux).quantize(quantize, rounding=ROUND_HALF_UP)
 
 
 def formater_nombre(valeur: Decimal, decimales: Optional[int] = None) -> str:
@@ -647,6 +858,45 @@ def texte_fiche(
         lignes.append(f"  {lab:<{largeur}} : {val}")
     lignes.append("────────────────────────────────")
     return "\n".join(lignes)
+
+
+def texte_fiche_bidirectionnel(res: ResultatConversion) -> str:
+    """Fiche complète alignée sur l'app Mac (sens et mode taux quelconques)."""
+    note = t("note_ajuste") if res.ajuste else ""
+    label_date = t("fiche_date_tx") if res.mode_taux == "daily" else t("period")
+    lignes = [
+        t("fiche_title_bidir"),
+        "────────────────────────────────",
+        f"{t('fiche_devise')} : {res.devise}",
+        f"{label_date} : {res.libelle_demande}",
+        f"{t('fiche_date_taux')} : {res.detail_taux}{note}",
+        f"{t('fiche_taux', devise=res.devise)} : {formater_nombre(res.taux)}",
+        f"{t('fiche_montant_devise')} : {formater_nombre(res.montant_entree, 2)} {res.devise_entree}",
+        f"{t('converted_amount')} : {formater_nombre(res.montant_sortie, 2)} {res.devise_sortie}",
+        f"{t('fiche_source')} : {res.source_label}",
+        "────────────────────────────────",
+    ]
+    return "\n".join(lignes)
+
+
+def ligne_tsv(res: ResultatConversion) -> str:
+    """Ligne tabulée pour collage Excel / journal."""
+    if res.devise_entree == "CAD":
+        foreign = res.montant_sortie
+        cad = res.montant_entree
+    else:
+        foreign = res.montant_entree
+        cad = res.montant_sortie
+    return "\t".join(
+        [
+            res.libelle_demande,
+            res.reference,
+            res.devise,
+            format(foreign, "f"),
+            format(res.taux, "f"),
+            format(cad, "f"),
+        ]
+    )
 
 
 def afficher_fiche(

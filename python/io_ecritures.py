@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import csv
+import json
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass
-from datetime import date
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, Iterable, Optional, Sequence
@@ -247,6 +248,124 @@ def lire_xlsx(chemin: Path | str) -> list[LigneLot]:
     return lignes
 
 
+def _ligne_depuis_champs(
+    brut_date: str,
+    brut_devise: str,
+    brut_montant: str,
+    reference: str = "",
+) -> LigneLot:
+    ligne = LigneLot(
+        brut_date=brut_date,
+        brut_devise=brut_devise,
+        brut_montant=brut_montant,
+        devise=brut_devise.strip().upper(),
+        reference=reference.strip(),
+    )
+    try:
+        if not brut_date.strip() or not brut_devise.strip() or not brut_montant.strip():
+            raise TauxBdcError("date, devise et montant sont requis.")
+        ligne.date_tx = parse_date(brut_date)
+        ligne.montant = parse_montant(brut_montant)
+    except TauxBdcError as err:
+        ligne.erreur = str(err)
+    return ligne
+
+
+def lire_json(chemin: Path | str) -> list[LigneLot]:
+    chemin = Path(chemin)
+    try:
+        data = json.loads(chemin.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise TauxBdcError(
+            "JSON invalide : attendu un tableau d'objets {date, devise, montant, reference}."
+        ) from exc
+    if not isinstance(data, list):
+        raise TauxBdcError(
+            "JSON invalide : attendu un tableau d'objets {date, devise, montant, reference}."
+        )
+    lignes: list[LigneLot] = []
+    for obj in data:
+        if not isinstance(obj, dict):
+            continue
+        fields: dict[str, str] = {}
+        for key, value in obj.items():
+            canon = _ALIAS_COLONNES.get(_norm_header(str(key)))
+            if canon is None:
+                continue
+            if isinstance(value, bool):
+                continue
+            if isinstance(value, int):
+                fields[canon] = str(value)
+            elif isinstance(value, float):
+                fields[canon] = format(Decimal(str(value)), "f")
+            else:
+                fields[canon] = str(value).strip()
+        lignes.append(
+            _ligne_depuis_champs(
+                fields.get("date", ""),
+                fields.get("devise", ""),
+                fields.get("montant", ""),
+                fields.get("reference", ""),
+            )
+        )
+    return lignes
+
+
+def lire_xml(chemin: Path | str) -> list[LigneLot]:
+    chemin = Path(chemin)
+    try:
+        root = ET.parse(chemin).getroot()
+    except (OSError, ET.ParseError) as exc:
+        raise TauxBdcError("XML invalide ou illisible.") from exc
+    records = root.findall(".//ecriture")
+    if not records:
+        raise TauxBdcError(
+            "Aucune écriture trouvée dans le XML (élément <ecriture> attendu)."
+        )
+    lignes: list[LigneLot] = []
+    for elem in records:
+        attrs = {k.lower(): (v or "").strip() for k, v in elem.attrib.items()}
+        lignes.append(
+            _ligne_depuis_champs(
+                attrs.get("date", ""),
+                attrs.get("devise", ""),
+                attrs.get("montant", ""),
+                attrs.get("reference", ""),
+            )
+        )
+    return lignes
+
+
+def ecrire_json(chemin: Path | str, lignes: Iterable[LigneLot]) -> None:
+    chemin = Path(chemin)
+    objects = [ligne.vers_dict_sortie() for ligne in lignes]
+    chemin.write_text(
+        json.dumps(objects, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+
+def _escape_xml(value: str) -> str:
+    return (
+        value.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+        .replace("'", "&apos;")
+    )
+
+
+def ecrire_xml(chemin: Path | str, lignes: Iterable[LigneLot]) -> None:
+    chemin = Path(chemin)
+    parts = ['<?xml version="1.0" encoding="UTF-8"?>', "<lot>"]
+    for ligne in lignes:
+        d = ligne.vers_dict_sortie()
+        attrs = " ".join(f'{k}="{_escape_xml(v)}"' for k, v in d.items())
+        parts.append(f"  <ecriture {attrs}/>")
+    parts.append("</lot>")
+    chemin.write_text("\n".join(parts) + "\n", encoding="utf-8")
+
+
 def lire_fichier(chemin: Path | str) -> list[LigneLot]:
     chemin = Path(chemin)
     suffix = chemin.suffix.lower()
@@ -254,7 +373,13 @@ def lire_fichier(chemin: Path | str) -> list[LigneLot]:
         return lire_csv(chemin)
     if suffix in (".xlsx", ".xlsm"):
         return lire_xlsx(chemin)
-    raise TauxBdcError(f"Format non supporté : {suffix}. Utilisez .csv ou .xlsx.")
+    if suffix == ".json":
+        return lire_json(chemin)
+    if suffix == ".xml":
+        return lire_xml(chemin)
+    raise TauxBdcError(
+        f"Format non supporté : {suffix}. Utilisez .csv, .xlsx, .json ou .xml."
+    )
 
 
 def ecrire_csv(chemin: Path | str, lignes: Iterable[LigneLot]) -> None:
@@ -292,8 +417,14 @@ def ecrire_fichier(chemin: Path | str, lignes: Iterable[LigneLot]) -> None:
         ecrire_csv(chemin, lignes)
     elif suffix == ".xlsx":
         ecrire_xlsx(chemin, lignes)
+    elif suffix == ".json":
+        ecrire_json(chemin, lignes)
+    elif suffix == ".xml":
+        ecrire_xml(chemin, lignes)
     else:
-        raise TauxBdcError(f"Format non supporté : {suffix}. Utilisez .csv ou .xlsx.")
+        raise TauxBdcError(
+            f"Format non supporté : {suffix}. Utilisez .csv, .xlsx, .json ou .xml."
+        )
 
 
 def traiter_ligne(ligne: LigneLot) -> LigneLot:

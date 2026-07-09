@@ -87,13 +87,15 @@ Windows: `taux.bat 2026-07-05 usd 1500`
 
 ---
 
-## macOS app features / Fonctions (app Mac)
+## App features / Fonctions (Mac & Windows)
+
+Both desktop apps offer the same accounting features (SwiftUI on Mac, Tkinter on Windows):
 
 | Tab | What it does |
 |-----|----------------|
-| **Conversion** | Single entry — daily, monthly or annual average rate; **foreign → CAD** or **CAD → foreign**; copy formats (full summary, amount only, TSV row) |
-| **Lots** | Batch import (CSV, Excel, JSON, XML) — drag & drop — process — export CSV/JSON/XML |
-| **Historique** | Audit log viewer, search, export, show in Finder, **clear history** (auto-backup to `data/sauvegardes/`) |
+| **Conversion** | Daily, monthly or annual average rate; **foreign ↔ CAD**; copy formats (full summary, amount only, TSV row) |
+| **Lots** | Batch import (CSV, Excel, JSON, XML) — drag & drop on Windows — process — export CSV/JSON/XML |
+| **Historique** | Audit log viewer, search, export, open data folder, **clear history** (auto-backup to `data/sauvegardes/`) |
 
 Weekend or holiday dates automatically use the **previous BoC business day**.
 
@@ -104,21 +106,7 @@ Weekend or holiday dates automatically use the **previous BoC business day**.
 
 Output adds: `date_taux`, `taux`, `montant_cad`, `serie`, `ajuste`, `erreur`.
 
----
-
-## Windows app (lighter) / App Windows (version allégée)
-
-| Feature | Mac | Windows |
-|---------|-----|---------|
-| Single conversion | ✅ | ✅ |
-| Batch CSV / Excel | ✅ | ✅ |
-| Batch JSON / XML | ✅ | — |
-| CAD ↔ foreign direction | ✅ | foreign → CAD only |
-| Monthly / annual averages | ✅ | — |
-| History tab + clear with backup | ✅ | — |
-| Flash CLI | ✅ | ✅ |
-| Audit log file | ✅ | ✅ |
-| Local cache | ✅ | ✅ |
+> **Note:** macOS uses a native SwiftUI interface; Windows uses Tkinter — same features, different look.
 
 ---
 
@@ -130,7 +118,7 @@ Stored next to the program in `data/` (preferred). Falls back to `~/.taux_bdc/` 
 |------|------|
 | `data/cache_taux.json` | Rates already fetched (offline fallback) |
 | `data/historique_conversions.log` | Timestamped audit lines for auditors |
-| `data/sauvegardes/` | Backups created before clearing history (Mac app) |
+| `data/sauvegardes/` | Backups created before clearing history |
 
 ---
 
@@ -167,8 +155,8 @@ scripts\build_windows.bat
 ## Automated releases (GitHub Actions)
 
 ```bash
-git tag v0.3.0
-git push origin v0.3.0
+git tag v0.4.0
+git push origin v0.4.0
 ```
 
 Or **Actions** → **Release builds** → **Run workflow**.

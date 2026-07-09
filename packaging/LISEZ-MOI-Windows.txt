@@ -7,26 +7,30 @@ FRANÇAIS
 2. Double-cliquez sur « Taux-BdC.exe ».
 3. Si SmartScreen : Informations complémentaires → Exécuter quand même.
 
-Dans l'application :
+Dans l'application (mêmes fonctions que la version Mac) :
 
   Conversion
-  - Une écriture : devise → CAD
-  - Copier la fiche / exporter CSV ou Excel
+  - Taux du jour, moyenne mensuelle ou annuelle
+  - Sens devise → CAD ou CAD → devise
+  - Copier (fiche complète, montant seul, ligne Excel)
   - Week-end / férié → dernier jour ouvré BdC automatiquement
 
-  Lot
-  - Importer un CSV ou Excel, traiter, exporter le résultat
+  Lots
+  - Importer CSV, Excel, JSON ou XML (glisser-déposer possible)
+  - Traiter → exporter CSV, JSON ou XML
   - Colonnes : date, devise, montant, reference (voir modele_lot.csv)
 
-  CLI Flash (optionnel, depuis le dossier décompressé)
+  Historique
+  - Journal d'audit de toutes les conversions
+  - Recherche, export, ouvrir le dossier data
+  - Effacer l'historique (sauvegarde auto dans data/sauvegardes/)
+
+  CLI Flash (optionnel)
   - taux.bat 2026-07-05 usd 1500 FAC-10443
 
 Fichiers locaux :
   data/cache_taux.json              — cache des taux (hors ligne)
-  data/historique_conversions.log   — piste d'audit
-
-Note : la version Mac offre plus de fonctions (historique intégré,
-moyennes mensuelles/annuelles, sens CAD → devise, JSON/XML).
+  data/historique_conversions.log   — piste d'audit pour les vérificateurs
 
 Aucun Python à installer. Internet requis (API Valet).
 
@@ -36,26 +40,30 @@ ENGLISH
 2. Double-click « Taux-BdC.exe ».
 3. If SmartScreen: More info → Run anyway.
 
-In the app:
+In the app (same features as the Mac version):
 
   Convert
-  - Single entry: foreign currency → CAD
-  - Copy summary / export CSV or Excel
+  - Daily, monthly or annual average rate
+  - Foreign → CAD or CAD → foreign
+  - Copy (full summary, amount only, Excel row)
   - Weekend/holiday → previous BoC business day automatically
 
-  Batch
-  - Import CSV or Excel, process, export results
+  Batches
+  - Import CSV, Excel, JSON or XML (drag & drop supported)
+  - Process → export CSV, JSON or XML
   - Columns: date, devise, montant, reference (see modele_lot.csv)
 
-  Flash CLI (optional, from the unzipped folder)
+  History
+  - Audit log of all conversions
+  - Search, export, open data folder
+  - Clear history (auto-backup to data/sauvegardes/)
+
+  Flash CLI (optional)
   - taux.bat 2026-07-05 usd 1500 INV-10443
 
 Local files:
   data/cache_taux.json              — rate cache (offline)
-  data/historique_conversions.log   — audit trail
-
-Note: the Mac version includes more features (built-in history tab,
-monthly/annual averages, CAD → foreign direction, JSON/XML).
+  data/historique_conversions.log   — audit trail for reviewers
 
 No Python required. Internet required (Valet API).
 
