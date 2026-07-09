@@ -58,6 +58,33 @@ enum AuditLog {
             .reversed()
     }
 
+    /// Sauvegarde le journal dans data/sauvegardes/ puis l'efface.
+    /// Retourne l'URL de la sauvegarde (nil si rien à effacer).
+    static func clearWithBackup() throws -> URL? {
+        let fm = FileManager.default
+        let source = AppDataPaths.auditLog
+        guard fm.fileExists(atPath: source.path),
+              let attrs = try? fm.attributesOfItem(atPath: source.path),
+              (attrs[.size] as? Int ?? 0) > 0
+        else {
+            return nil
+        }
+
+        let backupDir = AppDataPaths.directory.appendingPathComponent("sauvegardes", isDirectory: true)
+        try fm.createDirectory(at: backupDir, withIntermediateDirectories: true)
+
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "yyyyMMdd-HHmmss"
+        let backup = backupDir.appendingPathComponent(
+            "historique_conversions_\(f.string(from: Date())).log"
+        )
+
+        try fm.copyItem(at: source, to: backup)
+        try fm.removeItem(at: source)
+        return backup
+    }
+
     private static func timestamp() -> String {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")

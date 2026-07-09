@@ -7,6 +7,9 @@ struct HistoryView: View {
 
     @State private var entries: [String] = []
     @State private var query = ""
+    @State private var showClearConfirm = false
+    @State private var errorMessage: String?
+    @State private var showError = false
 
     private var filtered: [String] {
         let q = query.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -46,6 +49,13 @@ struct HistoryView: View {
                     Label(L10n.t("show_finder", lang: appState.lang), systemImage: "folder")
                 }
 
+                Button(role: .destructive) {
+                    showClearConfirm = true
+                } label: {
+                    Label(L10n.t("clear_history", lang: appState.lang), systemImage: "trash")
+                }
+                .disabled(entries.isEmpty)
+
                 Spacer()
 
                 Text(L10n.t("history_count", lang: appState.lang, filtered.count))
@@ -61,6 +71,23 @@ struct HistoryView: View {
         }
         .padding(20)
         .onAppear(perform: reload)
+        .alert(L10n.t("error", lang: appState.lang), isPresented: $showError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(errorMessage ?? "")
+        }
+        .confirmationDialog(
+            L10n.t("clear_confirm_title", lang: appState.lang),
+            isPresented: $showClearConfirm,
+            titleVisibility: .visible
+        ) {
+            Button(L10n.t("clear_confirm_button", lang: appState.lang), role: .destructive) {
+                clearHistory()
+            }
+            Button(L10n.t("cancel", lang: appState.lang), role: .cancel) {}
+        } message: {
+            Text(L10n.t("clear_confirm_message", lang: appState.lang))
+        }
     }
 
     private var emptyState: some View {
@@ -115,6 +142,23 @@ struct HistoryView: View {
             try? text.write(to: url, atomically: true, encoding: .utf8)
             ExportPanel.remember(url)
             appState.status = appState.lang == .fr ? "Historique exporté." : "History exported."
+        }
+    }
+
+    private func clearHistory() {
+        do {
+            let backup = try AuditLog.clearWithBackup()
+            query = ""
+            reload()
+            if let backup {
+                appState.status = L10n.t("cleared_status", lang: appState.lang, backup.lastPathComponent)
+            } else {
+                appState.status = L10n.t("ready", lang: appState.lang)
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+            showError = true
+            appState.status = L10n.t("ready", lang: appState.lang)
         }
     }
 }

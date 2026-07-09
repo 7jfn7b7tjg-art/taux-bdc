@@ -78,6 +78,21 @@ enum L10n {
                 .en: "No logged conversions yet."
             ],
             "history_count": [.fr: "%d entrée(s)", .en: "%d entry(ies)"],
+            "clear_history": [.fr: "Effacer l’historique…", .en: "Clear history…"],
+            "clear_confirm_title": [
+                .fr: "Effacer tout l’historique ?",
+                .en: "Clear all history?"
+            ],
+            "clear_confirm_message": [
+                .fr: "Une sauvegarde horodatée sera créée dans data/sauvegardes/ avant l’effacement.",
+                .en: "A timestamped backup will be saved to data/sauvegardes/ before clearing."
+            ],
+            "clear_confirm_button": [.fr: "Effacer", .en: "Clear"],
+            "cancel": [.fr: "Annuler", .en: "Cancel"],
+            "cleared_status": [
+                .fr: "Historique effacé — sauvegarde : %@",
+                .en: "History cleared — backup: %@"
+            ],
         ]
         let format = table[key]?[lang] ?? key
         if args.isEmpty { return format }
