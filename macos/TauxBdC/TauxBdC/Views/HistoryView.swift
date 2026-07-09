@@ -71,6 +71,7 @@ struct HistoryView: View {
         }
         .padding(20)
         .onAppear(perform: reload)
+        .onChange(of: appState.auditLogRevision) { _ in reload() }
         .alert(L10n.t("error", lang: appState.lang), isPresented: $showError) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -150,6 +151,7 @@ struct HistoryView: View {
             let backup = try AuditLog.clearWithBackup()
             query = ""
             reload()
+            appState.bumpAuditLog()
             if let backup {
                 appState.status = L10n.t("cleared_status", lang: appState.lang, backup.lastPathComponent)
             } else {

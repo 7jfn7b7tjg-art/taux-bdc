@@ -8,9 +8,26 @@ FRANÇAIS
 3. Si macOS bloque : clic droit → Ouvrir → Ouvrir.
 
 Dans l'application :
-- Onglet Conversion : une écriture (copier / exporter CSV ou Excel)
-- Onglet Lot : importer un CSV/Excel, traiter, exporter le résultat
-- Modèle : date, devise, montant, reference (modele_lot.csv)
+
+  Conversion
+  - Taux du jour, moyenne mensuelle ou annuelle
+  - Sens devise → CAD ou CAD → devise
+  - Copier (fiche complète, montant seul, ligne Excel)
+  - Week-end / férié → dernier jour ouvré BdC automatiquement
+
+  Lots
+  - Importer CSV, Excel, JSON ou XML (glisser-déposer possible)
+  - Traiter → exporter le résultat
+  - Colonnes : date, devise, montant, reference (voir modele_lot.csv)
+
+  Historique
+  - Journal d'audit de toutes les conversions
+  - Recherche, export, afficher dans le Finder
+  - Effacer l'historique (sauvegarde auto dans data/sauvegardes/)
+
+Fichiers locaux (à côté de l'app) :
+  data/cache_taux.json              — cache des taux (hors ligne)
+  data/historique_conversions.log   — piste d'audit pour les vérificateurs
 
 ENGLISH
 -------
@@ -19,8 +36,25 @@ ENGLISH
 3. If macOS blocks: right-click → Open → Open.
 
 In the app:
-- Convert tab: single entry
-- Batch tab: import CSV/Excel, process, export
-- Template columns: date, devise, montant, reference
+
+  Convert
+  - Daily, monthly or annual average rate
+  - Foreign → CAD or CAD → foreign
+  - Copy (full summary, amount only, Excel row)
+  - Weekend/holiday → previous BoC business day automatically
+
+  Batches
+  - Import CSV, Excel, JSON or XML (drag & drop supported)
+  - Process → export results
+  - Columns: date, devise, montant, reference (see modele_lot.csv)
+
+  History
+  - Audit log of all conversions
+  - Search, export, show in Finder
+  - Clear history (auto-backup to data/sauvegardes/)
+
+Local files (next to the app):
+  data/cache_taux.json              — rate cache (offline)
+  data/historique_conversions.log   — audit trail for reviewers
 
 Source: Bank of Canada Valet API — rates are indicative only.

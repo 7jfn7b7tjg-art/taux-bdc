@@ -274,6 +274,7 @@ struct BatchView: View {
                         toCurrency: "CAD",
                         sourceLabel: rate.sourceLabel(lang: appState.lang)
                     )
+                    appState.bumpAuditLog()
                     rows[i].rateDate = rate.rateDate
                     rows[i].rate = rate.rate
                     rows[i].cad = cad

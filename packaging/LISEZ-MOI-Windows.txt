@@ -8,10 +8,25 @@ FRANÇAIS
 3. Si SmartScreen : Informations complémentaires → Exécuter quand même.
 
 Dans l'application :
-- Onglet Conversion : une écriture (copier / exporter CSV ou Excel)
-- Onglet Lot : importer un CSV/Excel, traiter, exporter le résultat
-- Modèle de colonnes : date, devise, montant, reference
-  (fichier modele_lot.csv inclus)
+
+  Conversion
+  - Une écriture : devise → CAD
+  - Copier la fiche / exporter CSV ou Excel
+  - Week-end / férié → dernier jour ouvré BdC automatiquement
+
+  Lot
+  - Importer un CSV ou Excel, traiter, exporter le résultat
+  - Colonnes : date, devise, montant, reference (voir modele_lot.csv)
+
+  CLI Flash (optionnel, depuis le dossier décompressé)
+  - taux.bat 2026-07-05 usd 1500 FAC-10443
+
+Fichiers locaux :
+  data/cache_taux.json              — cache des taux (hors ligne)
+  data/historique_conversions.log   — piste d'audit
+
+Note : la version Mac offre plus de fonctions (historique intégré,
+moyennes mensuelles/annuelles, sens CAD → devise, JSON/XML).
 
 Aucun Python à installer. Internet requis (API Valet).
 
@@ -22,10 +37,25 @@ ENGLISH
 3. If SmartScreen: More info → Run anyway.
 
 In the app:
-- Convert tab: single entry (copy / export CSV or Excel)
-- Batch tab: import CSV/Excel, process, export results
-- Column template: date, devise, montant, reference
-  (modele_lot.csv included)
+
+  Convert
+  - Single entry: foreign currency → CAD
+  - Copy summary / export CSV or Excel
+  - Weekend/holiday → previous BoC business day automatically
+
+  Batch
+  - Import CSV or Excel, process, export results
+  - Columns: date, devise, montant, reference (see modele_lot.csv)
+
+  Flash CLI (optional, from the unzipped folder)
+  - taux.bat 2026-07-05 usd 1500 INV-10443
+
+Local files:
+  data/cache_taux.json              — rate cache (offline)
+  data/historique_conversions.log   — audit trail
+
+Note: the Mac version includes more features (built-in history tab,
+monthly/annual averages, CAD → foreign direction, JSON/XML).
 
 No Python required. Internet required (Valet API).
 

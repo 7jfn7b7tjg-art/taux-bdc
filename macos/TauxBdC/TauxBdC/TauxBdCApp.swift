@@ -24,6 +24,12 @@ final class AppState: ObservableObject {
         didSet { UserDefaults.standard.set(lang.rawValue, forKey: "pref_lang") }
     }
     @Published var status: String = ""
+    /// Incrémenté à chaque écriture ou effacement du journal d'audit.
+    @Published var auditLogRevision: Int = 0
+
+    func bumpAuditLog() {
+        auditLogRevision += 1
+    }
 
     init() {
         let saved = UserDefaults.standard.string(forKey: "pref_lang")

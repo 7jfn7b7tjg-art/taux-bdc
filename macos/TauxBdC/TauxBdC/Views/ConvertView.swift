@@ -439,6 +439,7 @@ struct ConvertView: View {
                 toCurrency: outputCcy,
                 sourceLabel: sourceLabel
             )
+            appState.bumpAuditLog()
 
             outcome = ConvertOutcome(
                 currency: currency,
