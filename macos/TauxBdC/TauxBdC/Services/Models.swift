@@ -59,7 +59,11 @@ enum MoneyParsing {
         let raw = NSDecimalNumber(decimal: v).stringValue
         let parts = raw.split(separator: ".", omittingEmptySubsequences: false)
         var intPart = String(parts[0])
-        let frac = parts.count > 1 ? String(parts[1]) : ""
+        var frac = parts.count > 1 ? String(parts[1]) : ""
+        // Decimal ne conserve pas les zéros finaux : compléter à `decimals` (1 500 → 1 500,00)
+        if let decimals, decimals > 0, frac.count < decimals {
+            frac += String(repeating: "0", count: decimals - frac.count)
+        }
         var sign = ""
         if intPart.hasPrefix("-") {
             sign = "-"
